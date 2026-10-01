@@ -22,11 +22,12 @@ body {
 }
 
 .controls {
-  width: 200px;
-  flex: 0 0 200px;
+  width: 260px;
+  flex: 0 0 260px;
   padding: 10px;
   border-right: 1px solid #ffffff;
   background: #ffffff;
+  overflow-y: auto;
 }
 
 .controls h1 {
@@ -34,29 +35,133 @@ body {
   font-size: 20px;
 }
 
+.controls h2 {
+  margin: 0 0 16px;
+  font-size: 15px;
+}
+
 .controls label {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   font-size: 14px;
 }
 
-.controls input[type="color"] {
-  width: 48px;
-  height: 32px;
-  border: none;
-  background: none;
+.hex-input {
+  width: 88px;
+  padding: 6px;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  font-family: monospace;
+  text-transform: uppercase;
+}
+
+.control-group {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #dddddd;
+}
+
+.controls .slider-control {
+  display: block;
+}
+
+.slider-control span {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.slider-control input {
+  width: 100%;
+}
+
+.controls .number-control span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.number-control input {
+  width: 86px;
+  padding: 6px;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.button-row button:first-child,
+.button-row button:nth-child(2) {
+  width: 36px;
+  padding-inline: 0;
+  font-size: 18px;
+}
+
+button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid #222222;
+  border-radius: 4px;
+  color: #ffffff;
+  background: #222222;
   cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+button.secondary {
+  color: #222222;
+  background: #ffffff;
+}
+
+.keyframe-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 34px;
+  margin: 16px 0;
+}
+
+.keyframe-button {
+  min-height: 30px;
+  padding: 5px 8px;
+  border-color: #bbbbbb;
+  color: #222222;
+  background: #ffffff;
+  font-size: 12px;
+}
+
+.keyframe-button.selected {
+  border-color: #222222;
+  color: #ffffff;
+  background: #222222;
+}
+
+.export-button {
+  width: 100%;
 }
 
 #canvas-container {
   min-width: 0;
   flex: 2;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 #canvas-container canvas {
   display: block;
+  flex: none;
+  box-shadow: 0 0 0 1px #cccccc;
 }

@@ -13,13 +13,56 @@
 
         <label for="bg-color">
           Achtergrond
-          <input id="bg-color" type="color" value="#f2f0e9" />
+          <input id="bg-color" class="hex-input" type="text" value="#F2F0E9" maxlength="7" spellcheck="false" />
         </label>
 
         <label for="fg-color">
           Voorgrond
-          <input id="fg-color" type="color" value="#222222" />
+          <input id="fg-color" class="hex-input" type="text" value="#222222" maxlength="7" spellcheck="false" />
         </label>
+
+        <section class="control-group">
+          <h2>Canvas</h2>
+
+          <label class="number-control" for="canvas-width">
+            Breedte
+            <span><input id="canvas-width" type="number" min="100" step="10" /> px</span>
+          </label>
+
+          <label class="number-control" for="canvas-height">
+            Hoogte
+            <span><input id="canvas-height" type="number" min="100" step="10" /> px</span>
+          </label>
+        </section>
+
+        <section class="control-group">
+          <h2>Positie</h2>
+
+          <label class="slider-control" for="rect-width">
+            <span>Breedte <output id="width-value">50%</output></span>
+            <input id="rect-width" type="range" min="0" max="100" value="50" />
+          </label>
+
+          <label class="slider-control" for="rect-height">
+            <span>Hoogte <output id="height-value">50%</output></span>
+            <input id="rect-height" type="range" min="0" max="100" value="50" />
+          </label>
+        </section>
+
+        <section class="control-group">
+          <h2>Animatie</h2>
+          <label class="number-control" for="keyframe-duration">
+            Duur
+            <span><input id="keyframe-duration" type="number" min="0.1" step="0.1" value="1" /> sec</span>
+          </label>
+          <div class="button-row">
+            <button id="remove-keyframe" type="button" aria-label="Verwijder geselecteerd keyframe">−</button>
+            <button id="duplicate-keyframe" type="button" aria-label="Dupliceer geselecteerd keyframe">+</button>
+            <button id="toggle-animation" type="button">Afspelen</button>
+          </div>
+          <div id="keyframe-list" class="keyframe-list"></div>
+          <button id="export-animation" class="secondary export-button" type="button">Exporteer MP4</button>
+        </section>
       </aside>
 
       <main id="canvas-container"></main>
