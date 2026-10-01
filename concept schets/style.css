@@ -163,5 +163,4 @@ button.secondary {
 #canvas-container canvas {
   display: block;
   flex: none;
-  box-shadow: 0 0 0 1px #cccccc;
 }

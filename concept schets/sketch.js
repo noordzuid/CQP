@@ -46,8 +46,8 @@ function setup() {
   playPauseButton = document.querySelector("#toggle-animation");
   exportButton = document.querySelector("#export-animation");
 
-  canvasWidthInput.value = canvasContainer.clientWidth;
-  canvasHeightInput.value = canvasContainer.clientHeight;
+  canvasWidthInput.value = 1920;
+  canvasHeightInput.value = 1080;
 
   pixelDensity(1);
   canvasRenderer = createCanvas(
@@ -87,8 +87,8 @@ function setup() {
 function draw() {
   updateAnimation();
 
-  const x = (splitX / 100) * width;
-  const y = (splitY / 100) * height;
+  const x = Math.round((splitX / 100) * width);
+  const y = Math.round((splitY / 100) * height);
   const color1 = getHexColor(backgroundPicker);
   const color2 = getHexColor(foregroundPicker);
 
@@ -136,8 +136,8 @@ function getHexColor(input) {
 }
 
 function mousePressed() {
-  const x = (splitX / 100) * width;
-  const y = (splitY / 100) * height;
+  const x = Math.round((splitX / 100) * width);
+  const y = Math.round((splitY / 100) * height);
 
   if (dist(mouseX, mouseY, x, y) < 24) {
     stopAnimation();
