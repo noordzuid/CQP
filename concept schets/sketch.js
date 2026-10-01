@@ -100,8 +100,7 @@ function draw() {
   rect(x, 0, width - x, y);
   rect(0, y, x, height - y);
 
-  const isNearHandle = dist(mouseX, mouseY, x, y) < 24;
-  cursor(isNearHandle || isDragging ? "grab" : ARROW);
+  cursor(isDragging ? "grabbing" : "grab");
 }
 
 function setupHexInput(input) {
@@ -136,10 +135,11 @@ function getHexColor(input) {
 }
 
 function mousePressed() {
-  const x = Math.round((splitX / 100) * width);
-  const y = Math.round((splitY / 100) * height);
+  const isInsideCanvas =
+    mouseX >= 0 && mouseX <= width &&
+    mouseY >= 0 && mouseY <= height;
 
-  if (dist(mouseX, mouseY, x, y) < 24) {
+  if (isInsideCanvas) {
     stopAnimation();
     isDragging = true;
     updatePositionFromMouse();
