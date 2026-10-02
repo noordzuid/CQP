@@ -3,7 +3,7 @@ const $ = (selector) => document.querySelector(selector);
 const canvas = $("#design-canvas");
 const ctx = canvas.getContext("2d", { alpha: false });
 const stage = $("#canvas-stage");
-const palette = ["#000000", "#FFFFFF", "#E73583", "#B40046", "#FA4A0A", "#B92B00", "#00AD60", "#006631"];
+const palette = ["#000000", "#FFFFFF", "#D9D9D9", "#FFA8AE", "#E73583", "#B40046", "#FA4A0A", "#B92B00", "#00AD60", "#006631"];
 const editorSettings = { gridSize: 20, rotationStep: 10, circleSnapThreshold: 30, guideSnapThreshold: 12 };
 const pixelDensity = 2;
 const canvasSize = { width: canvas.width, height: canvas.height };
@@ -104,8 +104,6 @@ let viewFrame = null;
 let drag = null;
 let isPlaying = false;
 let playRequest = 0;
-let recorder = null;
-let recordedChunks = [];
 let undoStack = [];
 let pendingTextSnapshot = null;
 let editingTextId = null;
@@ -801,7 +799,6 @@ function stopPlayback() {
   ui.play.textContent = "Play";
   renderKeyframes();
   render();
-  if (recorder?.state === "recording") recorder.stop();
 }
 
 function canvasPoint(event) {
@@ -1355,8 +1352,10 @@ function downloadBlob(blob, filename) {
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
+  document.body.append(link);
   link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 $("#export-png").addEventListener("click", () => {
@@ -1370,30 +1369,118 @@ $("#export-png").addEventListener("click", () => {
   }, "image/png");
 });
 
+async function getMp4EncoderConfig(width, height, fps) {
+  const base = {
+    width,
+    height,
+    bitrate: Math.max(8_000_000, width * height * fps * .08),
+    framerate: fps,
+    avc: { format: "avc" },
+    hardwareAcceleration: "prefer-hardware",
+    latencyMode: "quality",
+  };
+  const codecs = ["avc1.640034", "avc1.4d0033", "avc1.420033"];
+  for (const codec of codecs) {
+    const config = { ...base, codec };
+    try {
+      const support = await VideoEncoder.isConfigSupported(config);
+      if (support.supported) return support.config;
+    } catch { /* Try the next H.264 profile. */ }
+  }
+  return null;
+}
+
+async function exportAnimationAsMp4() {
+  if (typeof VideoEncoder === "undefined" || typeof VideoFrame === "undefined") {
+    throw new Error("Deze browser ondersteunt geen echte MP4-export via WebCodecs");
+  }
+  const { Muxer, ArrayBufferTarget } = await import("./vendor/mp4-muxer.mjs");
+  const width = canvas.width;
+  const height = canvas.height;
+  const fps = 30;
+  const frameDuration = Math.round(1_000_000 / fps);
+  const config = await getMp4EncoderConfig(width, height, fps);
+  if (!config) throw new Error("Deze browser heeft geen H.264-encoder voor MP4");
+
+  const target = new ArrayBufferTarget();
+  const muxer = new Muxer({
+    target,
+    video: { codec: "avc", width, height },
+    fastStart: "in-memory",
+    firstTimestampBehavior: "offset",
+  });
+  let encoderError = null;
+  const encoder = new VideoEncoder({
+    output: (chunk, metadata) => muxer.addVideoChunk(chunk, metadata),
+    error: (error) => { encoderError = error; },
+  });
+  encoder.configure(config);
+
+  const previousFrame = selectedFrame;
+  const previousSelection = selectedElementId;
+  const shouldLoop = ui.loop.checked;
+  const segmentCount = shouldLoop ? keyframes.length : keyframes.length - 1;
+  const totalFrames = keyframes.slice(0, segmentCount).reduce((sum, frame) => sum + Math.max(1, Math.round(frame.duration / 1000 * fps)), 0);
+  let frameIndex = 0;
+  isPlaying = true;
+  ui.play.textContent = "Stop";
+  renderKeyframes();
+
+  const encodeCurrentCanvas = () => {
+    const frame = new VideoFrame(canvas, { timestamp: frameIndex * frameDuration, duration: frameDuration });
+    encoder.encode(frame, { keyFrame: frameIndex % (fps * 2) === 0 });
+    frame.close();
+    frameIndex += 1;
+  };
+
+  try {
+    for (let segment = 0; segment < segmentCount; segment += 1) {
+      const start = keyframes[segment];
+      const end = keyframes[(segment + 1) % keyframes.length];
+      const framesInSegment = Math.max(1, Math.round(start.duration / 1000 * fps));
+      for (let index = 0; index < framesInSegment; index += 1) {
+        const progress = index / framesInSegment;
+        viewFrame = interpolateFrames(start, end, easingFns[ui.easing.value](progress));
+        render(false);
+        encodeCurrentCanvas();
+        if (encoder.encodeQueueSize > 5) await encoder.flush();
+        if (frameIndex % 15 === 0) {
+          ui.exportStatus.textContent = `MP4 wordt gemaakt… ${Math.round(frameIndex / totalFrames * 100)}%`;
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+        if (encoderError) throw encoderError;
+      }
+    }
+    await encoder.flush();
+    if (encoderError) throw encoderError;
+    muxer.finalize();
+    return new Blob([target.buffer], { type: "video/mp4" });
+  } finally {
+    encoder.close();
+    isPlaying = false;
+    viewFrame = null;
+    selectedFrame = previousFrame;
+    selectedElementId = previousSelection;
+    ui.play.textContent = "Play";
+    syncUI();
+  }
+}
+
 $("#export-video").addEventListener("click", async () => {
   closeInlineTextEditor(true);
   if (keyframes.length < 2) { ui.exportStatus.textContent = "Voeg eerst een keyframe toe"; return; }
-  if (!canvas.captureStream || typeof MediaRecorder === "undefined") { ui.exportStatus.textContent = "Video-export wordt hier niet ondersteund"; return; }
-  const types = ["video/mp4;codecs=avc1.42E01E", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
-  const mimeType = types.find((type) => MediaRecorder.isTypeSupported(type));
-  if (!mimeType) { ui.exportStatus.textContent = "Geen ondersteund videoformaat"; return; }
-  recordedChunks = [];
-  const stream = canvas.captureStream(60);
-  try { recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 12_000_000 }); }
-  catch { ui.exportStatus.textContent = "Export kon niet starten"; return; }
-  recorder.addEventListener("dataavailable", (event) => { if (event.data.size) recordedChunks.push(event.data); });
-  const stopped = new Promise((resolve) => recorder.addEventListener("stop", resolve, { once: true }));
-  recorder.start();
-  ui.exportStatus.textContent = "Video wordt gemaakt…";
-  await playAnimation();
-  render(false);
-  if (recorder.state === "recording") recorder.stop();
-  await stopped;
-  stream.getTracks().forEach((track) => track.stop());
-  const extension = mimeType.startsWith("video/mp4") ? "mp4" : "webm";
-  downloadBlob(new Blob(recordedChunks, { type: mimeType }), `cqp-animatie.${extension}`);
-  ui.exportStatus.textContent = extension === "mp4" ? "MP4 geëxporteerd" : "Browser exporteerde WebM";
-  recorder = null;
+  ui.exportStatus.textContent = "MP4 wordt voorbereid…";
+  try {
+    const blob = await exportAnimationAsMp4();
+    if (!blob.size) throw new Error("MP4 bevat geen data");
+    const header = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+    const boxType = String.fromCharCode(...header.slice(4, 8));
+    if (boxType !== "ftyp") throw new Error("ongeldige MP4-container");
+    downloadBlob(blob, "cqp-animatie.mp4");
+    ui.exportStatus.textContent = `MP4 geëxporteerd (${Math.ceil(blob.size / 1024)} kB)`;
+  } catch (error) {
+    ui.exportStatus.textContent = `MP4-export mislukt: ${error.message || "onbekende fout"}`;
+  }
 });
 
 function moveSelectedLayer(toFront) {
