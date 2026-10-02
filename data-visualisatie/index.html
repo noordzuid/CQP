@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Een compacte ontwerptool voor geanimeerde CQP-visualisaties." />
+    <title>CQP Data Visualisatie</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="panel" aria-label="Controlepaneel">
+        <header class="brandbar">
+          <div>
+            <strong>CQP</strong>
+            <span>Data visualisatie</span>
+          </div>
+        </header>
+
+        <section class="panel-section" data-section="sketch">
+          <button class="section-heading" type="button" aria-expanded="true">
+            <span>Schets</span><span class="collapse-symbol">−</span>
+          </button>
+          <div class="section-content">
+            <label class="control-row" for="mode-select">
+              <span>Modus</span>
+              <select id="mode-select">
+                <option value="circles">Cirkels</option>
+                <option value="grid">Grid</option>
+              </select>
+            </label>
+
+            <div class="control-row control-row-start">
+              <span>Achtergrond</span>
+              <div id="background-swatches" class="swatches" aria-label="Achtergrondkleur"></div>
+            </div>
+
+            <div id="freeform-tools" class="tool-grid" aria-label="Element toevoegen">
+              <button id="add-circle" type="button">Cirkel</button>
+              <button id="add-rect" type="button">Vlak</button>
+              <button id="add-text" type="button">Tekst</button>
+            </div>
+
+            <div id="grid-tools" class="grid-tools" hidden>
+              <span>Verdeel geselecteerd vlak</span>
+              <div class="split-actions">
+                <button id="split-horizontal" type="button">Horizontaal</button>
+                <button id="split-vertical" type="button">Verticaal</button>
+              </div>
+              <button id="merge-cell" type="button">Samenvoegen</button>
+              <p>Alles snapt op hetzelfde onzichtbare raster van 20 px.</p>
+            </div>
+
+            <div id="context-menu" class="selection-panel" hidden>
+              <div class="context-heading"><span>SELECTIE</span><strong id="context-label">Selectie</strong></div>
+              <button id="context-edit-text" class="context-wide" type="button" hidden>Tekst bewerken</button>
+              <div class="context-group">
+                <span>Kleur</span>
+                <div id="context-swatches" class="swatches context-swatches" aria-label="Elementkleur"></div>
+              </div>
+              <div id="context-text-controls" hidden>
+                <label class="context-select" for="context-font-size">
+                  <span>Tekstgrootte</span>
+                  <select id="context-font-size">
+                    <option value="40">40</option>
+                    <option value="80">80</option>
+                    <option value="160">160</option>
+                    <option value="240">240</option>
+                  </select>
+                </label>
+                <div class="context-align">
+                  <span>Uitlijning</span>
+                  <div id="context-text-align" class="alignment-buttons" aria-label="Horizontale tekstuitlijning">
+                    <button type="button" data-value="left" aria-label="Links" title="Links">
+                      <span class="align-icon horizontal left"><i></i><i></i><i></i></span>
+                    </button>
+                    <button type="button" data-value="center" aria-label="Midden" title="Midden">
+                      <span class="align-icon horizontal center"><i></i><i></i><i></i></span>
+                    </button>
+                    <button type="button" data-value="right" aria-label="Rechts" title="Rechts">
+                      <span class="align-icon horizontal right"><i></i><i></i><i></i></span>
+                    </button>
+                  </div>
+                </div>
+                <div class="context-align">
+                  <span>Verticaal</span>
+                  <div id="context-text-vertical-align" class="alignment-buttons" aria-label="Verticale tekstuitlijning">
+                    <button type="button" data-value="top" aria-label="Boven" title="Boven">
+                      <span class="align-icon vertical top"><i></i><i></i><i></i></span>
+                    </button>
+                    <button type="button" data-value="middle" aria-label="Midden" title="Midden">
+                      <span class="align-icon vertical middle"><i></i><i></i><i></i></span>
+                    </button>
+                    <button type="button" data-value="bottom" aria-label="Onder" title="Onder">
+                      <span class="align-icon vertical bottom"><i></i><i></i><i></i></span>
+                    </button>
+                  </div>
+                </div>
+                <label class="context-rotation" for="context-rotation-input">
+                  <span>Rotatie</span>
+                  <span class="rotation-input">
+                    <input id="context-rotation-input" type="number" min="-180" max="180" step="10" value="0" />
+                    <span>°</span>
+                  </span>
+                </label>
+              </div>
+              <div id="context-actions" class="context-actions">
+                <button id="context-duplicate" type="button">Dupliceer</button>
+                <button id="context-delete" type="button">Verwijder</button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <section class="panel-section" data-section="keyframes">
+          <button class="section-heading" type="button" aria-expanded="true">
+            <span>Keyframes</span><span class="collapse-symbol">−</span>
+          </button>
+          <div class="section-content">
+            <label class="control-row" for="easing-select">
+              <span>Easing</span>
+              <select id="easing-select">
+                <option value="easeInOutCirc">Ease in out circ</option>
+                <option value="easeInOutCubic">Ease in out cubic</option>
+                <option value="easeOutExpo">Ease out expo</option>
+                <option value="linear">Linear</option>
+              </select>
+            </label>
+
+            <div class="keyframe-row">
+              <span>Keyframes</span>
+              <div class="keyframe-stack">
+                <div id="keyframe-list" class="keyframe-list" role="listbox" aria-label="Keyframes"></div>
+                <div class="icon-actions">
+                  <button id="add-keyframe" type="button" aria-label="Kopieer geselecteerd keyframe">+</button>
+                  <button id="remove-keyframe" type="button" aria-label="Verwijder geselecteerd keyframe">−</button>
+                </div>
+              </div>
+            </div>
+
+            <label class="control-row" for="duration-input">
+              <span>Lengte (ms)</span>
+              <input id="duration-input" type="number" min="100" max="10000" step="100" value="800" />
+            </label>
+            <label class="control-row" for="loop-input">
+              <span>Loop</span>
+              <input id="loop-input" class="toggle-input" type="checkbox" />
+            </label>
+            <button id="play-button" class="wide-button" type="button">Play</button>
+          </div>
+        </section>
+
+        <section class="panel-section" data-section="export">
+          <button class="section-heading" type="button" aria-expanded="true">
+            <span>Export</span><span class="collapse-symbol">−</span>
+          </button>
+          <div class="section-content">
+            <label class="control-row" for="width-input">
+              <span>Breedte</span>
+              <input id="width-input" type="number" min="240" max="4096" step="10" value="1080" />
+            </label>
+            <label class="control-row" for="height-input">
+              <span>Hoogte</span>
+              <input id="height-input" type="number" min="240" max="4096" step="10" value="1080" />
+            </label>
+            <div class="export-actions">
+              <button id="export-png" type="button">PNG</button>
+              <button id="export-video" type="button">MP4</button>
+            </div>
+            <p id="export-status" class="status" role="status" aria-live="polite"></p>
+          </div>
+        </section>
+      </aside>
+
+      <main id="workspace" class="workspace">
+        <div id="canvas-stage" class="canvas-stage">
+          <canvas id="design-canvas" width="1080" height="1080" aria-label="Ontwerpcanvas"></canvas>
+          <textarea id="inline-text-editor" class="inline-text-editor" aria-label="Tekst op canvas bewerken" hidden></textarea>
+        </div>
+
+      </main>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
