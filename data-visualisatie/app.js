@@ -3,7 +3,8 @@ const $ = (selector) => document.querySelector(selector);
 const canvas = $("#design-canvas");
 const ctx = canvas.getContext("2d", { alpha: false });
 const stage = $("#canvas-stage");
-const palette = ["#000000", "#FFFFFF", "#D9D9D9", "#FFA8AE", "#E73583", "#B40046", "#FA4A0A", "#B92B00", "#00AD60", "#006631"];
+const palette = [  "#000000", "#FFFFFF", "#F1E1B3", "#BCA358", "#7E6929", "#564511", "#DAF0C9", "#84AC66", "#5B8B36", "#2C530E", "#CEF6F6", "#7AD3D1", "#009494", "#05565F",
+  "#C2DFFF", "#3175C0", "#0D509A", "#002F63", "#FFC7CC", "#E24751", "#A32E30", "#571426", "#EFD6F5", "#C096CA", "#A466B3", "#5C2769"];
 const editorSettings = { gridSize: 20, rotationStep: 10, circleSnapThreshold: 30, guideSnapThreshold: 12 };
 const pixelDensity = 2;
 const canvasSize = { width: canvas.width, height: canvas.height };
